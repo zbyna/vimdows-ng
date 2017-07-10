@@ -32,6 +32,8 @@ by Rich Alesi, and most of the credit for this script goes to him.
 
 	* Thunderbird Text Composition
 
+- with <tt>Capslock</tt> for CodeTyphon
+
 
 
 ### Basic VIM navigation and text manipulation
@@ -57,7 +59,7 @@ If you are not familiar with VIM yet, you might want to try a [vim tutorial](htt
 
 |Keys  |Function|
 |---------------|--------|
-|a, | append at cursor / end of line|
+|a,A| append at cursor / end of line|
 |0| go to first character in line|
 |C, D|change / delete rest of line|
 |J| move next line to end of this line|

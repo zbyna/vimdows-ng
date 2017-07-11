@@ -10,6 +10,35 @@
 ; More modifications: Chris Scheingraber
 ; Thursday, October 6, 2016
 
+; Another modification by zbyna
+; July, 2017
+;----------------------------------------------
+ToolTipFM(Text="", WhichToolTip=16) {
+  ; ToolTip which does not flicker
+  ; modified from original script from http://www.autohotkey.com/forum/post-430240.html#430240
+  ; thanks to author Learning one 
+  static LastText, hwnd 
+  x:=60, y:=10
+  if (Text = "") { ; destroy tooltip 
+    ToolTip,,,, % WhichToolTip
+    LastText := "", hwnd := ""
+    return
+  }
+  else { ;recreate tooltip
+    if (Text != LastText) { ; move tooltip
+      ; Perfect solution would be to update tooltip text (TTM_UPDATETIPTEXT), but must be compatible with all versions of AHK_L and AHK Basic.
+      ; My Ask For Help link: http://www.autohotkey.com/forum/post-421841.html#421841
+      CoordMode, ToolTip, Screen
+      ToolTip,,,, % WhichToolTip ; destroy old
+      ToolTip, % Text, x, y, % WhichToolTip ; show new
+      hwnd := WinExist("ahk_class tooltips_class32 ahk_pid " DllCall("GetCurrentProcessId"))
+      LastText := Text
+    }
+    Winset, AlwaysOnTop, on, ahk_id %hwnd%
+  }
+}
+;-----------------------------------------------
+
 #Persistent
 #SingleInstance, Force
 SetKeyDelay, -1
@@ -47,6 +76,7 @@ return
 ~CapsLock::
  vimModeOn := !vimModeOn
 return
+
 #IfWinActive
 
 
@@ -66,7 +96,8 @@ while (vimModeOn = true or (!GetKeyState("Ctrl","P") and GetKeyState("CAPSLOCK",
    else if num !=
       Tooltip, %num%, 60, 10
    else
-      Tooltip, vimdows, 60, 10
+      ;Tooltip, vimdows, 60, 10
+      ToolTipFM("vim mode")
    SetTimer, vim, off
 }
 
@@ -74,7 +105,8 @@ modal =
 num =
 unvimize()
 SetTimer, vim, on
-Tooltip
+;Tooltip
+ToolTipFM("")
 Return
 
 vimize()
@@ -85,7 +117,8 @@ vimize()
 
 unvimize()
 {
-  Tooltip
+  ;Tooltip
+  ToolTipFM("")
   Gui 11:Destroy
   vimModeOn := false
 }

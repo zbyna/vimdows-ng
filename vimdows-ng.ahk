@@ -10,6 +10,35 @@
 ; More modifications: Chris Scheingraber
 ; Thursday, October 6, 2016
 
+; Another modification by zbyna
+; July, 2017
+;----------------------------------------------
+ToolTipFM(Text="", WhichToolTip=16) {
+  ; ToolTip which does not flicker
+  ; modified from original script from http://www.autohotkey.com/forum/post-430240.html#430240
+  ; thanks to author Learning one 
+  static LastText, hwnd 
+  x:=60, y:=10
+  if (Text = "") { ; destroy tooltip 
+    ToolTip,,,, % WhichToolTip
+    LastText := "", hwnd := ""
+    return
+  }
+  else { ;recreate tooltip
+    if (Text != LastText) { ; move tooltip
+      ; Perfect solution would be to update tooltip text (TTM_UPDATETIPTEXT), but must be compatible with all versions of AHK_L and AHK Basic.
+      ; My Ask For Help link: http://www.autohotkey.com/forum/post-421841.html#421841
+      CoordMode, ToolTip, Screen
+      ToolTip,,,, % WhichToolTip ; destroy old
+      ToolTip, % Text, x, y, % WhichToolTip ; show new
+      hwnd := WinExist("ahk_class tooltips_class32 ahk_pid " DllCall("GetCurrentProcessId"))
+      LastText := Text
+    }
+    Winset, AlwaysOnTop, on, ahk_id %hwnd%
+  }
+}
+;-----------------------------------------------
+
 #Persistent
 #SingleInstance, Force
 SetKeyDelay, -1
@@ -35,20 +64,25 @@ vimModeOn := false
 ; enter normal mode for some programs with ESC
 #IfWinActive MATLAB
 Esc::
-	vimModeOn := !vimModeOn
+  vimModeOn := !vimModeOn
 return
 #IfWinActive
 ; Thunderbird
 #IfWinActive Verfassen
 Esc::
-	vimModeOn := !vimModeOn
+  vimModeOn := !vimModeOn
 return
+#IfWinActive Typhon
+~CapsLock::
+ vimModeOn := !vimModeOn
+return
+
 #IfWinActive
 
 
 ; can always enter normal mode with shift-ESC
 +Esc::
-	vimModeOn := !vimModeOn
+  vimModeOn := !vimModeOn
 return
 
 
@@ -62,7 +96,8 @@ while (vimModeOn = true or (!GetKeyState("Ctrl","P") and GetKeyState("CAPSLOCK",
    else if num !=
       Tooltip, %num%, 60, 10
    else
-      Tooltip, vimdows, 60, 10
+      ;Tooltip, vimdows, 60, 10
+      ToolTipFM("vim mode")
    SetTimer, vim, off
 }
 
@@ -70,7 +105,8 @@ modal =
 num =
 unvimize()
 SetTimer, vim, on
-Tooltip
+;Tooltip
+ToolTipFM("")
 Return
 
 vimize()
@@ -81,7 +117,8 @@ vimize()
 
 unvimize()
 {
-  Tooltip
+  ;Tooltip
+  ToolTipFM("")
   Gui 11:Destroy
   vimModeOn := false
 }
@@ -97,66 +134,66 @@ IsLastKey(key)
 ; Multiples
 ; limit to not blindly run sth too often
 1::
-	num = %num%1
-	numlimit(50)
+  num = %num%1
+  numlimit(50)
 return
 
 2::
-	num = %num%2
-	numlimit(50)
+  num = %num%2
+  numlimit(50)
 return
 
 3::
-	num = %num%3
-	numlimit(50)
+  num = %num%3
+  numlimit(50)
 return
 
 4::
-	num = %num%4
-	numlimit(50)
+  num = %num%4
+  numlimit(50)
 return
 
 5::
-	num = %num%5
-	numlimit(50)
+  num = %num%5
+  numlimit(50)
 return
 
 6::
-	num = %num%6
-	numlimit(50)
+  num = %num%6
+  numlimit(50)
 return
 
 7::
-	num = %num%7
-	numlimit(50)
+  num = %num%7
+  numlimit(50)
 return
 
 8::
-	num = %num%8
-	numlimit(50)
+  num = %num%8
+  numlimit(50)
 return
 
 9::
-	num = %num%9
-	numlimit(50)
+  num = %num%9
+  numlimit(50)
 return
 
 ; 0 is used for num and to go to first char dep. on context
 0::
 if (num = "") {
-	handle_nav_mode("{home}")
-	} else {
-		num = %num%0
-		numlimit(50)
-	}
+  handle_nav_mode("{home}")
+  } else {
+    num = %num%0
+    numlimit(50)
+  }
 return
 
 ; soft limit for num to not blindly execute too often
 numlimit(limit) {
-	global num
-	if (num > limit) {
-		num := limit
-	}
+  global num
+  if (num > limit) {
+    num := limit
+  }
 }
 
 ; ~ toggle case
@@ -177,12 +214,12 @@ numlimit(limit) {
 SetTitleMatchMode 2 ;- Mode 2 is window title substring.
 ^d::
 IfWinNotActive, MATLAB
-	{
-	handle_nav_mode("{PgDn}")
-	} else
-	{
-		SendInput, ^d
-	}
+  {
+  handle_nav_mode("{PgDn}")
+  } else
+  {
+    SendInput, ^d
+  }
 return
 
 ; navigation keys
@@ -204,50 +241,50 @@ b::handle_nav_mode("^{left " . num . "}")
 ; Insert lines
 o::
 if modal =
-	Send, {END}{ENTER}
-	unvimize()
-	vimModeOn := false
+  Send, {END}{ENTER}
+  unvimize()
+  vimModeOn := false
 return
 
 +o::
 if modal =
-	Send, {HOME}{ENTER}{UP}
-	unvimize()
-	vimModeOn := false
+  Send, {HOME}{ENTER}{UP}
+  unvimize()
+  vimModeOn := false
 return
 
 +i::
-	Send, {HOME}{HOME}
-	unvimize()
-	vimModeOn := false
+  Send, {HOME}{HOME}
+  unvimize()
+  vimModeOn := false
 return
 
 ; get next line to end of this line
 +j::
 if modal =
-	Send, {Down}{Home}{Home}{Backspace}
+  Send, {Down}{Home}{Home}{Backspace}
 return
 
 ; Delete end of line
 +D::
 if modal =
-	Send, {SHIFT DOWN}{END}{SHIFT UP}{DEL}
+  Send, {SHIFT DOWN}{END}{SHIFT UP}{DEL}
 return
 
 ; change end of line
 +C::
 if modal =
-	Send, {SHIFT DOWN}{END}{SHIFT UP}{DEL}
-	unvimize()
-	vimModeOn := false
+  Send, {SHIFT DOWN}{END}{SHIFT UP}{DEL}
+  unvimize()
+  vimModeOn := false
 return
 
 ; Go out of whatever mode you're in
 Esc::
-	modal =
-	num =
-	context =
-	Send {Left}{Right}
+  modal =
+  num =
+  context =
+  Send {Left}{Right}
 return
 
 
@@ -256,36 +293,37 @@ return
 ; change context to change-inner and delete inner
 i::
 if (modal = "") {
-	; exit normal mode, go to insertion mode
-	unvimize()
+  ; exit normal mode, go to insertion mode
+  unvimize()
     vimModeOn := false
 } else if (modal = delete) {
-	; for now, di emulates diw
-	GetWordSelection()
-	Run_Mode()
+  ; for now, di emulates diw
+  GetWordSelection()
+  Run_Mode()
 } else if (modal = change) {
-	; for now, ci emulates ciw
-	GetWordSelection()
-	Send, {BACKSPACE}
-	unvimize()
-	vimModeOn := false
-	context =
-	modal =
+  ; for now, ci emulates ciw
+  GetWordSelection()
+  Send, {BACKSPACE}
+  unvimize()
+  vimModeOn := false
+  context =
+  modal =
 }
+SetCapsLockState Off
 return
 
 a::
 if modal =
-	Send, {Right}
-	unvimize()
-	vimModeOn := false
+  Send, {Right}
+  unvimize()
+  vimModeOn := false
 return
 
 +a::
 if modal =
-	Send, {END}
-	unvimize()
-	vimModeOn := false
+  Send, {END}
+  unvimize()
+  vimModeOn := false
 return
 
 
@@ -293,11 +331,11 @@ return
 g::
 if modal =
 {
-	if IsLastKey("g")
-	{
-	    ;gg - Go to start of document
-	    Send, ^{Home}
-	}
+  if IsLastKey("g")
+  {
+      ;gg - Go to start of document
+      Send, ^{Home}
+  }
 }
 return
 
@@ -305,27 +343,27 @@ return
 +g::
 if modal =
 {
-	if num =
-	{
-	; G to go to last line
-		Send, {Ctrl Down}{END}{Ctrl Up}
-	} else
-	{
-	; go to n-th line
-	; Matlab
-	IfWinActive, MATLAB
-		{
-			SendInput, {Ctrl Down}g{Ctrl Up}
-			SendRaw, %num%
-			SendInput, {Enter}
-		    num =
-		} else {
-		; general n-th line
-		num -= 1
-		Send, {Ctrl Down}{HOME}{Ctrl Up}{Down %num%)}
-	    num =
-		}
-	}
+  if num =
+  {
+  ; G to go to last line
+    Send, {Ctrl Down}{END}{Ctrl Up}
+  } else
+  {
+  ; go to n-th line
+  ; Matlab
+  IfWinActive, MATLAB
+    {
+      SendInput, {Ctrl Down}g{Ctrl Up}
+      SendRaw, %num%
+      SendInput, {Enter}
+        num =
+    } else {
+    ; general n-th line
+    num -= 1
+    Send, {Ctrl Down}{HOME}{Ctrl Up}{Down %num%)}
+      num =
+    }
+  }
 }
 return
 
@@ -333,23 +371,23 @@ return
 t::
 if modal =
 {
-	if IsLastKey("g")
-	{
-	    ;gt - next tab
-	    Send, {Ctrl Down}{PgDn %num%}{Ctrl Up}
-	    num =
-	}
+  if IsLastKey("g")
+  {
+      ;gt - next tab
+      Send, {Ctrl Down}{PgDn %num%}{Ctrl Up}
+      num =
+  }
 }
 return
 +t::
 if modal =
 {
-	if IsLastKey("g")
-	{
-	    ;gT - prev tab
-	    Send, {Ctrl Down}{PgUp %num%}{Ctrl Up}
-	    num =
-	}
+  if IsLastKey("g")
+  {
+      ;gT - prev tab
+      Send, {Ctrl Down}{PgUp %num%}{Ctrl Up}
+      num =
+  }
 }
 return
 
@@ -395,10 +433,10 @@ return
 +,::
 IfWinActive, MATLAB
 {
-	Send, ^[
+  Send, ^[
 } else {
-	; General indent
-	Send, {End}{Home}{Home}{Del}{Del}{Del}{Del}
+  ; General indent
+  Send, {End}{Home}{Home}{Del}{Del}{Del}{Del}
 }
 return
 
@@ -407,10 +445,10 @@ return
 +.::
 IfWinActive, MATLAB
 {
-	Send, ^]
+  Send, ^]
 } else {
-	; General indent
-	Send, {Home}`t
+  ; General indent
+  Send, {Home}`t
 }
 return
 
@@ -443,20 +481,20 @@ if (modal = "") {
     modal = %change%
 } else if (modal = yanklines or modal = yank) {
     ;change text from visual mode
-	modal = %delete%
-	Run_Mode()
-	unvimize()
-	vimModeOn := false
+  modal = %delete%
+  Run_Mode()
+  unvimize()
+  vimModeOn := false
 } else if ( modal = change) {
-	if islastkey("c") {
-		GetLineSelection()
-		Send, {BACKSPACE}
-		unvimize()
-		vimModeOn := false
-		Send, {Enter}{Up}
-		context =
-		modal =
-	}
+  if islastkey("c") {
+    GetLineSelection()
+    Send, {BACKSPACE}
+    unvimize()
+    vimModeOn := false
+    Send, {Enter}{Up}
+    context =
+    modal =
+  }
 }
 return
 
@@ -469,22 +507,22 @@ return
 
 +v::
 if (modal = "") {
-	GetLineSelection()
-	context = Line Yank Mode
-	modal = %yanklines%
+  GetLineSelection()
+  context = Line Yank Mode
+  modal = %yanklines%
 }
 return
 
 ;y yanks in visual, yy yanks line
 y::
 if (modal = yanklines) {
-	modal = %yank%
+  modal = %yank%
 } else if (modal = "") {
-	if IsLastKey("y") {
-	    GetLineSelection()
-	    modal = %yank%
-	    Run_Mode()
-	}
+  if IsLastKey("y") {
+      GetLineSelection()
+      modal = %yank%
+      Run_Mode()
+  }
 }
 Run_Mode()
 return
@@ -504,31 +542,31 @@ return
 
 handle_nav_mode(nav)
 {
-	global
-	num =
-	if (modal =  "") {
-		Send, %nav%
-	} else {
-		Send, +%nav%
-		if (modal = delete) {
-			Run_Mode()
-	    } else if ( modal = change ) {
-			Send, {BACKSPACE}
-			unvimize()
-			vimModeOn := false
-		} else if (modal = yanklines) {
-			if (nav = "down") {
-				Send +{End}
-			} else if (nav = "up") {
-				Send +{Home}
-			} else if (nav = "PgDn") {
-				Send +{PgDn}
-			} else if (nav = "PgUp") {
-				Send +{PgUp}
-			}
-		}
-	}
-	return
+  global
+  num =
+  if (modal =  "") {
+    Send, %nav%
+  } else {
+    Send, +%nav%
+    if (modal = delete) {
+      Run_Mode()
+      } else if ( modal = change ) {
+      Send, {BACKSPACE}
+      unvimize()
+      vimModeOn := false
+    } else if (modal = yanklines) {
+      if (nav = "down") {
+        Send +{End}
+      } else if (nav = "up") {
+        Send +{Home}
+      } else if (nav = "PgDn") {
+        Send +{PgDn}
+      } else if (nav = "PgUp") {
+        Send +{PgUp}
+      }
+    }
+  }
+  return
 }
 
 GetLineSelection() {
@@ -537,8 +575,8 @@ GetLineSelection() {
 }
 
 GetWordSelection() {
-	global
-	Send, {Shift Up}^{Left}{Shift Down}^{Right %num%}{Shift Up}
+  global
+  Send, {Shift Up}^{Left}{Shift Down}^{Right %num%}{Shift Up}
 }
 
 Run_Mode() {

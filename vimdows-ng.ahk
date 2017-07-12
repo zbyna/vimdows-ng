@@ -10,15 +10,15 @@
 ; More modifications: Chris Scheingraber
 ; Thursday, October 6, 2016
 
+
 ; Another modification by zbyna
 ; July, 2017
 ;----------------------------------------------
-ToolTipFM(Text="", WhichToolTip=16) {
+ToolTipFM(Text="",x=60,y=10, WhichToolTip=16) {
   ; ToolTip which does not flicker
   ; modified from original script from http://www.autohotkey.com/forum/post-430240.html#430240
   ; thanks to author Learning one 
-  static LastText, hwnd 
-  x:=60, y:=10
+  static LastText, hwnd
   if (Text = "") { ; destroy tooltip 
     ToolTip,,,, % WhichToolTip
     LastText := "", hwnd := ""
@@ -90,15 +90,20 @@ vim:
 while (vimModeOn = true or (!GetKeyState("Ctrl","P") and GetKeyState("CAPSLOCK", "P")))
 ; make it not run if ctrl+capslock is pressed (so ctrl+capslock toggles capslock
 {
-   vimize()
-   if modal !=
-      Tooltip, %context%: %num%, 60, 10
-   else if num !=
-      Tooltip, %num%, 60, 10
-   else
+    vimize()
+    if modal !=
+      {
+        pom := Format("{1}:{2}", context, num)
+        ;Tooltip, %context%: %num%, 60, 10
+        ToolTipFM(pom,180,10,1)
+      }
+    else if num !=
+      ;Tooltip, %num%, 60, 10
+      ToolTipFM(num,360,10,2)
+    else  
       ;Tooltip, vimdows, 60, 10
-      ToolTipFM("vim mode")
-   SetTimer, vim, off
+      ToolTipFM("vim mode")  
+    SetTimer, vim, off
 }
 
 modal =
@@ -106,7 +111,7 @@ num =
 unvimize()
 SetTimer, vim, on
 ;Tooltip
-ToolTipFM("")
+ToolTipFM("",180,10,1) ;context
 Return
 
 vimize()
@@ -118,7 +123,8 @@ vimize()
 unvimize()
 {
   ;Tooltip
-  ToolTipFM("")
+  Hide_tooltips()
+  ToolTipFM("")          ;vim mode
   Gui 11:Destroy
   vimModeOn := false
 }
@@ -281,6 +287,7 @@ return
 
 ; Go out of whatever mode you're in
 Esc::
+  Hide_tooltips() 
   modal =
   num =
   context =
@@ -289,7 +296,7 @@ return
 
 
 ; todo: implement true ci and di -modal types here
-; change modal to changer-inner and delete-inner and wait for next key
+; change modal to changer-inner and -inner and wait for next key
 ; change context to change-inner and delete inner
 i::
 if (modal = "") {
@@ -583,6 +590,12 @@ Run_Mode() {
    global modal
    Send, ^%modal%
    Send {Left}{RIGHT}
+   Hide_tooltips()
    num =
    modal =
+}
+
+Hide_tooltips() {
+   ToolTipFM("" ,180,10,1) ;context
+   ToolTipFM("",360,10,2)  ;num
 }
